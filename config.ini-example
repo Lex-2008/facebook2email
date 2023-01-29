@@ -1,0 +1,49 @@
+[global]
+# GLOBAL options for the whole script
+
+# number of seconds to sleep after start,
+# chosen randomly between these two values.
+# useful if you run this script every hour,
+# and don't want to raise suspicion by
+# opening same page at HH:00:01 every hour.
+#start_sleep_min=300
+#start_sleep_max=1200
+
+# proxy to use by Chrome, if any
+#chrome_proxy=socks5://localhost:1234
+
+
+
+[DEFAULT]
+# DEFAULT options for all tasks below
+
+# number of seconds to sleep after opening URL
+# to let the page load completely
+#open_sleep_min=10
+#open_sleep_max=15
+
+# number of seconds to sleep after scrolling to bottom
+# to let all posts to load
+#loadscroll_sleep_min=10
+#loadscroll_sleep_max=15
+
+smtp_server=gmail-smtp-in.l.google.com.
+mail_from=nobody@facebook.com
+mail_to=username@gmail.com
+
+# if to make and send screenshots of new messages
+# (otherwise, only text will be sent)
+screenshots=true
+
+
+
+#### INDIVIDUAL TASKS ####
+
+[one]
+facebook_group=3393041030744182
+mail_subject=cakes
+
+[two]
+facebook_group=4381332475270168
+mail_subject=cartoons
+
