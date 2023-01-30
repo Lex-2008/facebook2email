@@ -7,9 +7,10 @@ import glob, configparser, smtplib
 from email.message import EmailMessage
 
 def randomsleep(section, name):
-    rand_sleep = random.randint(config.getint(section, name+'_sleep_min', fallback=5), config.getint(section, name+'_sleep_max', fallback=10))
-    print('sleeping %d sec' % rand_sleep)
-    time.sleep(rand_sleep)
+    print('sleeping')
+    time.sleep(random.randint(
+        config.getint(section, name+'_sleep_min', fallback=5),
+        config.getint(section, name+'_sleep_max', fallback=10)))
 
 config = configparser.ConfigParser(interpolation=None)
 config.read('/data/config.ini')
@@ -22,9 +23,9 @@ os.makedirs('/data/posts', exist_ok=True)
 for lockfile in glob.glob('/data/profile/Singleton*'):
     os.remove(lockfile)
 
-chrome_options = uc.ChromeOptions();
+chrome_options = uc.ChromeOptions()
 if 'chrome_proxy' in config['global']:
-    chrome_options.add_argument('--proxy-server=' + config['global']['chrome_proxy']);
+    chrome_options.add_argument('--proxy-server=' + config['global']['chrome_proxy'])
 print('starting')
 driver = uc.Chrome(options=chrome_options, advanced_elements=True, user_data_dir='/data/profile')
 
@@ -51,7 +52,7 @@ for section in config.sections():
         post_text=a.text
         # TODO: or one .. less?
         # TODO: climb one .. at a time, checking that .text differs, or .children() has >1 child
-        b=a.find_element(By.XPATH,"./../../..");
+        b=a.find_element(By.XPATH,"./../../..")
         c=b.find_elements(By.TAG_NAME,'a')
         post_url=next(x.attrs['href'].split('?')[0] for x in c if '/posts/' in x.attrs['href'])
         post_id=re.search('posts/([0-9]*)', post_url).group(1)

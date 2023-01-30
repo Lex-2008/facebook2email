@@ -1,8 +1,8 @@
 Facebook2email
 ==============
 
-Forward posts in selected groups to your email.
-Uses [undetected-chromedriver][] in docker.
+Forwards posts in selected groups to your email.
+Uses [undetected-chromedriver][] (in docker).
 Inspired by [Facebook-Scraper-Bot-And-Forwarder][].
 
 [undetected-chromedriver]: https://github.com/ultrafunkamsterdam/undetected-chromedriver
@@ -12,12 +12,13 @@ Features
 --------
 
 * Uses permanent Chrome profile,
-in which you can login to Facebook and view private groups
+in which you can login to Facebook
+to give script access to private groups
 (although this can be changed, ofc)
 * Sends text of new posts by email
-* Optionally attaches their screenshots to emails
+* Optionally with post screenshots
 * Is expected to be driven by cron
-(doesn't have its own task scheduler - is it a feature or anti-feature?)
+(doesn't have its own task scheduler - is it a feature or lack of feature?)
 
 Requirements
 ------------
@@ -28,9 +29,38 @@ I assume Linux, but you might succeed on other platforms.
 Installation
 ------------
 
-Clone this repo, copy config.ini-example to config.ini, edit it to your liking.
+Clone this repo and run:
 
-### Running Chrome manually
+	docker pull ultrafunk/undetected-chromedriver
+
+Configuration
+-------------
+
+Copy config.ini-example to config.ini, edit it to your liking.
+You will need to change **at least** `mail_to` (set it to your email address),
+maybe `smtp_server` (unless you're using gmail),
+and provide group IDs in `facebook_group` parameters in each section.
+You can have any number of section,
+their names (`[one]` and `[two]` in example config) don't matter.
+
+Worth noting that script iterates over all sections in this file
+(except `[global]` and `[DEFAULT]`),
+opens facebook group mentioned in each of them,
+and checks it for updates.
+`[DEFAULT]` section provides _default_ values for settings in other sections,
+and other sections can override them,
+like it's done for `mail_subject` and `screenshots` in example config.
+It means that this script can check _any_ number of facebook groups,
+and send results to different email addresses, if desired.
+
+Sending emails to multiple addresses,
+or using encrypted connection to SMTP server
+is not implemented yet.
+
+Usage
+-----
+
+### Manually
 
 In order to view private groups,
 you need to login to Facebook.
@@ -53,20 +83,20 @@ In bash prompt, type this:
 	x11vnc & python
 
 It will start VNC server and open Python for you.
-x11vnc will send output to your terminal,
-so hit Enter few times to get to Python prompt.
+x11vnc will send output to same terminal as where Python is running,
+so hit Enter few times to see the Python prompt.
 
 If you use proxy server to connect to Facebook, type this in Python prompt
 (replace `socks5://localhost:1234` with your actual proxy server):
 
-	import undetected_chromedriver as uc;
-	chrome_options = uc.ChromeOptions();
-	chrome_options.add_argument('--proxy-server=socks5://localhost:1234');
+	import undetected_chromedriver as uc
+	chrome_options = uc.ChromeOptions()
+	chrome_options.add_argument('--proxy-server=socks5://localhost:1234')
 	driver = uc.Chrome(options=chrome_options, advanced_elements=True, user_data_dir='/data/profile')
 
 Otherwise, type this:
 
-	import undetected_chromedriver as uc;
+	import undetected_chromedriver as uc
 	driver = uc.Chrome(advanced_elements=True, user_data_dir='/data/profile')
 
 You can adjust other arguments to `uc.Chrome` to your liking,
@@ -86,12 +116,12 @@ if your VNC client doesn't support copy-pasting.
 
 After you're done, quit Python and Docker container by Ctrl+D.
 
-Usage
------
+
+### Automatically (using this script)
 
 Add this command to your crontab:
 
-	docker run --rm -it -v ${PWD}:/data --shm-size=2g ultrafunk/undetected-chromedriver /data/script.py
+	docker run --rm -v ${PWD}:/data --shm-size=2g ultrafunk/undetected-chromedriver /data/script.py >last.log 2>&1
 
 Replacing `${PWD}` with path to this repo
 (it must contain `script.py` file).
@@ -99,4 +129,10 @@ If your Docker is too old and doesn't support `--shm-size` argument,
 replace it with `-v ...:/dev/shm`,
 like shown earlier:
 
-	docker run --rm -it -v ${PWD}:/data -v /dev/shm:/dev/shm ultrafunk/undetected-chromedriver /data/script.py
+	docker run --rm -v ${PWD}:/data -v /dev/shm:/dev/shm ultrafunk/undetected-chromedriver /data/script.py >last.log 2>&1
+
+It will visit groups enumerated in your config.ini file,
+scroll a page once (so more than one post gets loaded),
+and check for new posts.
+All seen posts are saved to `posts` subdir in data dir,
+and an email is sent for each group containing new posts.

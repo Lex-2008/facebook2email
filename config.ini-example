@@ -27,9 +27,10 @@
 #loadscroll_sleep_min=10
 #loadscroll_sleep_max=15
 
-smtp_server=gmail-smtp-in.l.google.com.
+smtp_server=gmail-smtp-in.l.google.com
 mail_from=nobody@facebook.com
 mail_to=username@gmail.com
+mail_subject=Facebook group updates
 
 # if to make and send screenshots of new messages
 # (otherwise, only text will be sent)
@@ -41,9 +42,10 @@ screenshots=true
 
 [one]
 facebook_group=3393041030744182
-mail_subject=cakes
+mail_subject=New cakes
+screenshots=false
 
 [two]
 facebook_group=4381332475270168
-mail_subject=cartoons
+mail_subject=New cartoons
 
