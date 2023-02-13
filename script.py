@@ -3,7 +3,7 @@
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 import os, os.path, random, re, time
-import glob, configparser, smtplib
+import glob, hashlib, configparser, smtplib
 from email.message import EmailMessage
 
 def randomsleep(section, name):
@@ -33,14 +33,11 @@ for section in config.sections():
     if section == 'global' or section == 'DEFAULT':
         continue
 
-    url = 'https://www.facebook.com/groups/%s?sorting_setting=CHRONOLOGICAL' % config[section]['facebook_group']
-    print('opening '+url)
+    url = 'https://m.facebook.com/groups/%s/' % config[section]['facebook_group']
+    print('opening')
     driver.get(url)
     randomsleep(section, 'open')
-
-    print('scrolling')
-    driver.execute_script('window.scrollTo(0,document.body.scrollHeight)')
-    randomsleep(section, 'loadscroll')
+    driver.save_screenshot('data/%s.png' % section)
 
     print('working')
     new_posts=[]
@@ -48,28 +45,34 @@ for section in config.sections():
     msg['Subject'] = config[section]['mail_subject']
     msg['From'] = config[section]['mail_from']
     msg['To'] = config[section]['mail_to']
-    for a in driver.find_elements(By.CSS_SELECTOR, 'div[data-ad-preview="message"]'):
-        post_text=a.text
-        # TODO: or one .. less?
-        # TODO: climb one .. at a time, checking that .text differs, or .children() has >1 child
-        b=a.find_element(By.XPATH,"./../../..")
-        c=b.find_elements(By.TAG_NAME,'a')
-        post_url=next(x.attrs['href'].split('?')[0] for x in c if '/posts/' in x.attrs['href'])
-        post_id=re.search('posts/([0-9]*)', post_url).group(1)
+    posts = driver.find_elements(By.CSS_SELECTOR, 'div.story_body_container')
+    # TODO: send email with warning if len(posts) < 3
+    # print('working on %d posts' % len(posts))
+    for post_div in posts:
+        post_text = post_div.text
+        post_links = post_div.find_elements(By.TAG_NAME,'a')
+        post_urls = [x.attrs['href'].split('?')[0] for x in post_links if '/permalink/' in x.attrs['href']]
+        if post_urls:
+            post_url = post_urls[0]
+            post_id = re.search('permalink/([0-9]*)', post_url).group(1)
+        else:
+            post_url = hashlib.md5(post_text.encode()).hexdigest()
+            post_id = post_url
+        # for screenshot
+        post_parent = post_div.find_element(By.XPATH,"./..")
+
         post_file='/data/posts/%s-%s.txt' % (config[section]['facebook_group'], post_id)
+
         if not os.path.exists(post_file):
             new_posts.append('%s\n%s' % (post_url, post_text))
             with open(post_file, 'w') as f:
                 f.write(post_text)
             if config.getboolean(section, 'screenshots', fallback=False):
-                driver.execute_script('arguments[0].scrollIntoView(false)',b)
+                driver.execute_script('arguments[0].scrollIntoView(false)',post_parent)
                 #randomsleep(section, 'scroll')
                 msg.add_attachment(b.screenshot_as_png, maintype='image',subtype='png')
 
-    new_posts_text='\n========================================================================\n'.join(new_posts)
-
-    with open('/data/%s-new.txt' % section, 'w') as f:
-        f.write(new_posts_text)
+    new_posts_text='\n==========================================================================\n'.join(new_posts)
 
     if new_posts:
         print('sending')
