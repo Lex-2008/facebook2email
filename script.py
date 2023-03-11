@@ -47,7 +47,7 @@ for section in config.sections():
     msg['To'] = config[section]['mail_to']
     posts = driver.find_elements(By.CSS_SELECTOR, 'div.story_body_container')
     # TODO: send email with warning if len(posts) < 3
-    # print('working on %d posts' % len(posts))
+    print('working on %d posts' % len(posts))
     for post_div in posts:
         post_text = post_div.text
         post_links = post_div.find_elements(By.TAG_NAME,'a')
@@ -63,6 +63,8 @@ for section in config.sections():
 
         post_file='/data/posts/%s-%s.txt' % (config[section]['facebook_group'], post_id)
 
+        print('DEBUG: post %s:\n%s\n' % (post_url, post_text))
+
         if not os.path.exists(post_file):
             new_posts.append('%s\n%s' % (post_url, post_text))
             with open(post_file, 'w') as f:
@@ -70,7 +72,7 @@ for section in config.sections():
             if config.getboolean(section, 'screenshots', fallback=False):
                 driver.execute_script('arguments[0].scrollIntoView(false)',post_parent)
                 #randomsleep(section, 'scroll')
-                msg.add_attachment(b.screenshot_as_png, maintype='image',subtype='png')
+                msg.add_attachment(post_parent.screenshot_as_png, maintype='image',subtype='png')
 
     new_posts_text='\n==========================================================================\n'.join(new_posts)
 
