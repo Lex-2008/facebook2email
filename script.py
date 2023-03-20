@@ -51,7 +51,7 @@ for section in config.sections():
     for post_div in posts:
         post_text = post_div.text
         post_links = post_div.find_elements(By.TAG_NAME,'a')
-        post_urls = [x.attrs['href'].split('?')[0] for x in post_links if '/permalink/' in x.attrs['href']]
+        post_urls = [x.attrs['href'].split('?')[0] for x in post_links if 'href' in x.attrs and '/permalink/' in x.attrs['href']]
         if post_urls:
             post_url = post_urls[0]
             post_id = re.search('permalink/([0-9]*)', post_url).group(1)
