@@ -33,7 +33,7 @@ for section in config.sections():
     if section == 'global' or section == 'DEFAULT':
         continue
 
-    url = 'https://m.facebook.com/groups/%s/' % config[section]['facebook_group']
+    url = 'https://facebook.com/groups/%s/' % config[section]['facebook_group']
     print('opening')
     driver.get(url)
     randomsleep(section, 'open')
@@ -45,21 +45,25 @@ for section in config.sections():
     msg['Subject'] = config[section]['mail_subject']
     msg['From'] = config[section]['mail_from']
     msg['To'] = config[section]['mail_to']
-    posts = driver.find_elements(By.CSS_SELECTOR, 'div.story_body_container')
+    posts = driver.find_elements(By.CSS_SELECTOR, 'div[role="article"]')
     # TODO: send email with warning if len(posts) < 3
     print('working on %d posts' % len(posts))
     for post_div in posts:
-        post_text = post_div.text
+        post_text_divs=post_div.find_elements(By.CSS_SELECTOR, 'div[data-ad-preview]')
+        if post_text_divs and post_text_divs[0].text:
+            post_text = post_text_divs[0].text
+        else:
+            post_text = post_div.text
         post_links = post_div.find_elements(By.TAG_NAME,'a')
-        post_urls = [x.attrs['href'].split('?')[0] for x in post_links if 'href' in x.attrs and '/permalink/' in x.attrs['href']]
+        post_urls = [x.attrs['href'].split('?')[0] for x in post_links if 'href' in x.attrs and '/posts/' in x.attrs['href']]
         if post_urls:
             post_url = post_urls[0]
-            post_id = re.search('permalink/([0-9]*)', post_url).group(1)
+            post_id = re.search('posts/([0-9]*)', post_url).group(1)
         else:
             post_url = hashlib.md5(post_text.encode()).hexdigest()
             post_id = post_url
         # for screenshot
-        post_parent = post_div.find_element(By.XPATH,"./..")
+        post_parent = post_div #.find_element(By.XPATH,"./..")
 
         post_file='/data/posts/%s-%s.txt' % (config[section]['facebook_group'], post_id)
 
@@ -73,6 +77,9 @@ for section in config.sections():
                 driver.execute_script('arguments[0].scrollIntoView(false)',post_parent)
                 #randomsleep(section, 'scroll')
                 msg.add_attachment(post_parent.screenshot_as_png, maintype='image',subtype='png')
+    
+    if not posts:
+        new_posts=['No posts detected, none at all']
 
     new_posts_text='\n==========================================================================\n'.join(new_posts)
 
